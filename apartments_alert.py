@@ -1,5 +1,4 @@
 import time
-import numpy as np
 from requests_html import HTMLSession
 from twilio.rest import Client
 from datetime import datetime
