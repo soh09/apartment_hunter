@@ -2,6 +2,8 @@ import time
 import numpy as np
 from requests_html import HTMLSession
 from twilio.rest import Client
+from datetime import datetime
+
 
 lux = 'https://www.on-site.com/web/online_app/choose_unit?goal=6&attr=x20&property_id=225322&lease_id=0&unit_id=0&required='
 three_60 = 'https://www.on-site.com/web/online_app/choose_unit?goal=6&attr=x20&property_id=191247&lease_id=0&unit_id=0&required='
@@ -45,9 +47,9 @@ def send_sms(message):
     # sending to so
     message = client.messages.create(messaging_service_sid='MG9b262dfc07ca251f557ea5206000f0cc', body=message, to='+16502914624') 
     # sending to zack
-    # message = client.messages.create(messaging_service_sid='MG9b262dfc07ca251f557ea5206000f0cc', body=message, to='+17605045501') 
+    message = client.messages.create(messaging_service_sid='MG9b262dfc07ca251f557ea5206000f0cc', body=message, to='+17605045501') 
     # sending to peter
-    # message = client.messages.create(messaging_service_sid='MG9b262dfc07ca251f557ea5206000f0cc', body=message, to='+16193175276') 
+    message = client.messages.create(messaging_service_sid='MG9b262dfc07ca251f557ea5206000f0cc', body=message, to='+16193175276') 
     
 
 minute_before_lux_d = make_dict(get_html(lux))
@@ -69,9 +71,12 @@ while (True):
         minute_before_three_60_d = three_60_d
         print("sending update: " + message)
         send_sms(message)
+
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
     
     print("--------------------------------------")
-    print("Current status: ")
+    print("Current status at " + dt_string+ ": ")
     print("Lux UTC: " + ", ".join(lux_d.keys()))
     print("360 Luxury: " + ", ".join(three_60_d.keys()))
     print("--------------------------------------")
