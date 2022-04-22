@@ -1,4 +1,4 @@
-from time import time
+import time
 import numpy as np
 from requests_html import HTMLSession
 from twilio.rest import Client
@@ -71,8 +71,4 @@ while (True):
     print("Lux UTC: " + ", ".join(lux_d.keys()))
     print("360 Luxury: " + ", ".join(three_60_d.keys()))
     time.sleep(60)
-
-
-
-
 
