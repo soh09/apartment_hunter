@@ -25,14 +25,14 @@ def make_dict(ps):
             d[current_plan].append(p.text)
     return d
 
-def get_difference(d_before, d_current):
+def get_difference(name, d_before, d_current):
     message = ""
     if (len(d_before)) > len(d_current):
         taken = ", ".join(d_before.keys() - d_current.keys())
-        message = "Listing removed update: " + taken
+        message = "[" + name + "] " + "Listing removed update: " + taken
     else:
         added = ", ".join(d_current.keys() - d_before.keys())
-        message = "New listing update: " + added
+        message = "[" + name + "] " + "New listing update: " + added
 
     return message
 
@@ -40,17 +40,18 @@ def send_sms(message):
     account_sid = 'ACb89be4618d01504371ee5a71581e0a4d' 
     auth_token = '257e09038f86713f5d78f6e025a0ebdb' 
     client = Client(account_sid, auth_token) 
+    print("sending message")
     
     # sending to so
     message = client.messages.create(messaging_service_sid='MG9b262dfc07ca251f557ea5206000f0cc', body=message, to='+16502914624') 
     # sending to zack
-    message = client.messages.create(messaging_service_sid='MG9b262dfc07ca251f557ea5206000f0cc', body=message, to='+17605045501') 
+    # message = client.messages.create(messaging_service_sid='MG9b262dfc07ca251f557ea5206000f0cc', body=message, to='+17605045501') 
     # sending to peter
-    message = client.messages.create(messaging_service_sid='MG9b262dfc07ca251f557ea5206000f0cc', body=message, to='+16193175276') 
+    # message = client.messages.create(messaging_service_sid='MG9b262dfc07ca251f557ea5206000f0cc', body=message, to='+16193175276') 
     
 
-minute_before_lux_d = make_dict(get_html(three_60))
-minute_before_three_60_d = make_dict(get_html(lux))
+minute_before_lux_d = make_dict(get_html(lux))
+minute_before_three_60_d = make_dict(get_html(three_60))
 
 
 while (True):
@@ -58,17 +59,21 @@ while (True):
     lux_d = make_dict(get_html(lux))
 
     if len(minute_before_lux_d) != len(lux_d):
-        message = get_difference(minute_before_lux_d, lux_d)
+        message = get_difference("Lux UTC", minute_before_lux_d, lux_d)
         minute_before_lux_d = lux_d
+        print("sending update: " + message)
         send_sms(message)
 
     if len(minute_before_three_60_d) != len(three_60_d):
-        message = get_difference(minute_before_three_60_d, three_60_d)
+        message = get_difference("360 Lux", minute_before_three_60_d, three_60_d)
         minute_before_three_60_d = three_60_d
+        print("sending update: " + message)
         send_sms(message)
     
+    print("--------------------------------------")
     print("Current status: ")
     print("Lux UTC: " + ", ".join(lux_d.keys()))
     print("360 Luxury: " + ", ".join(three_60_d.keys()))
+    print("--------------------------------------")
     time.sleep(60)
 
