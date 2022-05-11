@@ -2,11 +2,13 @@ import time
 from requests_html import HTMLSession
 from twilio.rest import Client
 from datetime import datetime
+import json
 
 
 lux = 'https://www.on-site.com/web/online_app/choose_unit?goal=6&attr=x20&property_id=225322&lease_id=0&unit_id=0&required='
 three_60 = 'https://www.on-site.com/web/online_app/choose_unit?goal=6&attr=x20&property_id=191247&lease_id=0&unit_id=0&required='
 cv = 'https://www.on-site.com/web/online_app/choose_unit?goal=6&attr=x20&property_id=1166&lease_id=0&unit_id=0&required='
+
 
 def get_html(url):
     session = HTMLSession()
@@ -72,7 +74,22 @@ def send_dang_sms(message):
     account_sid = 'ACb89be4618d01504371ee5a71581e0a4d' 
     auth_token = '257e09038f86713f5d78f6e025a0ebdb'
     client = Client(account_sid, auth_token)
-    message = client.messages.create(messaging_service_sid='MG9b262dfc07ca251f557ea5206000f0cc', body=message, to='16692437630') 
+    message = client.messages.create(messaging_service_sid='MG9b262dfc07ca251f557ea5206000f0cc', body=message, to='16692437630')
+
+
+def send_message(message, account_sid, token, service_sid, number):
+    """
+    This function sends 'message' to the specified number using the twilio credentials provided.\n
+    Inputs:
+        message: the content of the text message
+        account_sid: twillio account sid
+        token: twillio auth token
+        service_sid: twillio messaging service sid
+        number: number to send the message to
+    """
+    client = Client(account_sid, token)
+    message = client.messages.create(messaging_service_sid = service_sid, body = message, to = number)
+
 
   
 
@@ -86,36 +103,37 @@ while (True):
     lux_d = make_dict(get_html(lux))
     cv_d = make_dict(get_html(cv))
 
-    if len(minute_before_lux_d) != len(lux_d):
-        message = get_difference("Lux UTC", minute_before_lux_d, lux_d, lux)
+    if len(minute_before_three_60_d) != len(lux_d):
+        message = get_difference("Lux UTC", minute_before_three_60_d, lux_d, lux)
         minute_before_lux_d = lux_d
         print("sending update: " + message)
-        send_so_sms(message)
-        send_zack_sms(message)
-        # send_sam_sms(message, lux)
-        send_peter_sms(message)
-        send_adrian_sms(message)
+        # send_so_sms(message)
+        send_message(message, 'ACb89be4618d01504371ee5a71581e0a4d', '257e09038f86713f5d78f6e025a0ebdb', 'MG9b262dfc07ca251f557ea5206000f0cc', '14438240989')
+        # send_zack_sms(message)
+        # # send_sam_sms(message, lux)
+        # send_peter_sms(message)
+        # send_adrian_sms(message)
 
-    if len(minute_before_three_60_d) != len(three_60_d):
-        message = get_difference("360", minute_before_three_60_d, three_60_d, three_60)
-        minute_before_three_60_d = three_60_d
-        print("sending update: " + message)
-        send_so_sms(message)
-        send_zack_sms(message)
-        # send_sam_sms(message, lux)
-        send_peter_sms(message)
-        send_adrian_sms(message)
+    # if len(minute_before_three_60_d) != len(three_60_d):
+    #     message = get_difference("360", minute_before_three_60_d, three_60_d, three_60)
+    #     minute_before_three_60_d = three_60_d
+    #     print("sending update: " + message)
+    #     send_so_sms(message)
+    #     send_zack_sms(message)
+    #     # send_sam_sms(message, lux)
+    #     send_peter_sms(message)
+    #     send_adrian_sms(message)
     
-    if len(minute_before_cv_d) != len(cv_d):
-        message = get_difference("Costa Verde", minute_before_cv_d, cv_d, cv)
-        minute_before_cv_d = cv_d
-        print("sending update: " + message)
-        send_so_sms(message)
-        send_zack_sms(message)
-        # send_sam_sms(message, lux)
-        send_peter_sms(message)
-        send_adrian_sms(message)
-        send_dang_sms(message)
+    # if len(minute_before_cv_d) != len(cv_d):
+    #     message = get_difference("Costa Verde", minute_before_cv_d, cv_d, cv)
+    #     minute_before_cv_d = cv_d
+    #     print("sending update: " + message)
+    #     send_so_sms(message)
+    #     send_zack_sms(message)
+    #     # send_sam_sms(message, lux)
+    #     send_peter_sms(message)
+    #     send_adrian_sms(message)
+    #     send_dang_sms(message)
 
     now = datetime.now()
     dt_string = now.strftime("%m/%d/%Y %H:%M:%S")
