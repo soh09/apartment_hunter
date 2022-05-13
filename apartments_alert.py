@@ -3,14 +3,16 @@ from requests_html import HTMLSession
 from twilio.rest import Client
 from datetime import datetime
 import json
-
-
-lux = 'https://www.on-site.com/web/online_app/choose_unit?goal=6&attr=x20&property_id=225322&lease_id=0&unit_id=0&required='
-three_60 = 'https://www.on-site.com/web/online_app/choose_unit?goal=6&attr=x20&property_id=191247&lease_id=0&unit_id=0&required='
-cv = 'https://www.on-site.com/web/online_app/choose_unit?goal=6&attr=x20&property_id=1166&lease_id=0&unit_id=0&required='
-
+import sys
 
 def get_html(url):
+    """
+    This function gets the html content of the target url.
+    Input:
+        the target url
+    Return:
+        The 'p' tag html elements from the url
+    """
     session = HTMLSession()
     req = session.get(url)
     paragraphs = req.html.find('p')
@@ -19,6 +21,39 @@ def get_html(url):
     return paragraphs
 
 def make_dict(ps):
+    """
+    This function parses the results of get_html() and makes a dictionary.\n
+    For example, if paragraphs (return value of get_html()) looked like this
+
+    [
+        <Element 'p' class=('floor_plan_name',)>,
+        <Element 'p' class=('floor_plan_size',)>,
+        <Element 'p' class=('floor_plan_name',)>,
+        <Element 'p' class=('floor_plan_size',)>,
+        <Element 'p' class=('floor_plan_name',)>,
+        <Element 'p' class=('floor_plan_size',)>
+    ]
+
+    then, this function makes a dictionary, where floor_plan_name is the key, and
+    floor_plan_size are the values.
+
+    For this specific example, this function would return the following dictionary.
+
+    {
+        'Lease Add-On': ['Room w/ shared bath, 500 Sq. Ft.'],
+        'Escape 1A 1 Bed/1 Ba': ['1 bed, 1 bath, 874 Sq. Ft.'],
+        'Panorama 2B 2 Bed/2 Ba': ['2 bed, 2 bath, 1154 Sq. Ft.']
+    }
+
+    'Lease Add-On' represents the the content of the first '<Element 'p' class=('floor_plan_name',)>'
+    and '['Room w/ shared bath, 500 Sq. Ft.']' represents the content of the first 
+    '<Element 'p' class=('floor_plan_size',)>'.
+
+    Input:
+        ps: the 'p' tags from the apartment url (this is the return value of the get_html() function)
+    Return:
+        the ps in the form of a dictionary
+    """
     current_plan = ""
     d = {}
     for p in ps:
@@ -30,6 +65,43 @@ def make_dict(ps):
     return d
 
 def get_difference(name, d_before, d_current, url):
+    """
+    This function takes in the name of the apartment, the url of the apartment leasing website,
+    and two dictionaries to compare: d_before and d_current.
+    d_before represents the dictionary created from the webpage a minute before, and d_current
+    represents the dictionary that was made from the webpage at this time.
+    This function is only called when the lengths of the dictionary keys are different; this function
+    figures out if a listing was removed, or a listing was added, and builds a different message for
+    those two cases. 
+
+    It returns a message which will be passed to the send_message function.
+
+    For example, if name was 'Sky Heights', url was 'url.com', the d_before was:
+    {
+        'Lease Add-On': ['Room w/ shared bath, 500 Sq. Ft.'],
+        'Escape 1A 1 Bed/1 Ba': ['1 bed, 1 bath, 874 Sq. Ft.'],
+        'Panorama 2B 2 Bed/2 Ba': ['2 bed, 2 bath, 1154 Sq. Ft.']
+    }
+    and d_crurrent was:
+    {
+        'Escape 1A 1 Bed/1 Ba': ['1 bed, 1 bath, 874 Sq. Ft.'],
+        'Panorama 2B 2 Bed/2 Ba': ['2 bed, 2 bath, 1154 Sq. Ft.']
+    }
+    d_current has a shorter key length, which means that a listing was taken off. Therefore, the 
+    message returned will be 
+    '[Sky Heights] Listing removed update: Lease Add-On'.
+
+    If a new listing was added, the url will also be a part of the message, so that the person who
+    recieved the text can apply ASAP.
+
+    Inputs:
+        name: name of the apartment
+        d_before: dictionary built from the url a minute ago
+        d_current: dictionary built from the url right now
+        url: the url where the html elements are fetched from
+    Returns:
+        The update message.
+    """
     message = ""
     if (len(d_before)) > len(d_current):
         taken = ", ".join(d_before.keys() - d_current.keys())
@@ -39,43 +111,6 @@ def get_difference(name, d_before, d_current, url):
         message = "[" + name + "] " + "New listing update: " + added + " [Website]: " + url
 
     return message
-
-def send_so_sms(message):
-    account_sid = 'ACb89be4618d01504371ee5a71581e0a4d' 
-    auth_token = '257e09038f86713f5d78f6e025a0ebdb' 
-    client = Client(account_sid, auth_token) 
-    message = client.messages.create(messaging_service_sid='MG9b262dfc07ca251f557ea5206000f0cc', body = message, to='16502914624')
-
-def send_zack_sms(message):
-    account_sid = 'ACb89be4618d01504371ee5a71581e0a4d' 
-    auth_token = '257e09038f86713f5d78f6e025a0ebdb' 
-    client = Client(account_sid, auth_token) 
-    message = client.messages.create(messaging_service_sid='MG9b262dfc07ca251f557ea5206000f0cc', body=message, to='17605045501')
-
-def send_peter_sms(message):
-    account_sid = 'ACb89be4618d01504371ee5a71581e0a4d' 
-    auth_token = '257e09038f86713f5d78f6e025a0ebdb' 
-    client = Client(account_sid, auth_token) 
-    message = client.messages.create(messaging_service_sid='MG9b262dfc07ca251f557ea5206000f0cc', body=message, to='16193175276')
-
-def send_sam_sms(message):
-    account_sid = 'ACb89be4618d01504371ee5a71581e0a4d' 
-    auth_token = '257e09038f86713f5d78f6e025a0ebdb'
-    client = Client(account_sid, auth_token) 
-    message = client.messages.create(messaging_service_sid='MG9b262dfc07ca251f557ea5206000f0cc', body=message, to='16266861588')
-
-def send_adrian_sms(message):
-    account_sid = 'ACb89be4618d01504371ee5a71581e0a4d' 
-    auth_token = '257e09038f86713f5d78f6e025a0ebdb'
-    client = Client(account_sid, auth_token)
-    message = client.messages.create(messaging_service_sid='MG9b262dfc07ca251f557ea5206000f0cc', body=message, to='18476248866')
-
-def send_dang_sms(message):
-    account_sid = 'ACb89be4618d01504371ee5a71581e0a4d' 
-    auth_token = '257e09038f86713f5d78f6e025a0ebdb'
-    client = Client(account_sid, auth_token)
-    message = client.messages.create(messaging_service_sid='MG9b262dfc07ca251f557ea5206000f0cc', body=message, to='16692437630')
-
 
 def send_message(message, account_sid, token, service_sid, number):
     """
@@ -91,58 +126,49 @@ def send_message(message, account_sid, token, service_sid, number):
     message = client.messages.create(messaging_service_sid = service_sid, body = message, to = number)
 
 
-  
+# reads in the json file as a dictionary
+with open(sys.path[0] + '/input.json', 'r') as j:
+    inputs = json.load(j)
 
-minute_before_lux_d = make_dict(get_html(lux))
-minute_before_three_60_d = make_dict(get_html(three_60))
-minute_before_cv_d = make_dict(get_html(cv))
+# makes a dictionary, which has tuples of names of the building and links as keys, and the result of make_dict() as the values
+old_listings_dicts = {name: make_dict(get_html(link)) for (name, link) in zip(inputs['names'], inputs['links'])}
+name_link_d = {name: link for (name, link) in zip(inputs['names'], inputs['links'])}
 
 
 while (True):
-    three_60_d = make_dict(get_html(three_60))
-    lux_d = make_dict(get_html(lux))
-    cv_d = make_dict(get_html(cv))
 
-    if len(minute_before_three_60_d) != len(lux_d):
-        message = get_difference("Lux UTC", minute_before_three_60_d, lux_d, lux)
-        minute_before_lux_d = lux_d
-        print("sending update: " + message)
-        # send_so_sms(message)
-        send_message(message, 'ACb89be4618d01504371ee5a71581e0a4d', '257e09038f86713f5d78f6e025a0ebdb', 'MG9b262dfc07ca251f557ea5206000f0cc', '14438240989')
-        # send_zack_sms(message)
-        # # send_sam_sms(message, lux)
-        # send_peter_sms(message)
-        # send_adrian_sms(message)
+    # putting the entire thing in a try except prevents the program from termintating abruptly, like when the internet goes out.
+    try:
+        new_listings_dicts = {name: make_dict(get_html(link)) for (name, link) in zip(inputs['names'], inputs['links'])}
 
-    # if len(minute_before_three_60_d) != len(three_60_d):
-    #     message = get_difference("360", minute_before_three_60_d, three_60_d, three_60)
-    #     minute_before_three_60_d = three_60_d
-    #     print("sending update: " + message)
-    #     send_so_sms(message)
-    #     send_zack_sms(message)
-    #     # send_sam_sms(message, lux)
-    #     send_peter_sms(message)
-    #     send_adrian_sms(message)
-    
-    # if len(minute_before_cv_d) != len(cv_d):
-    #     message = get_difference("Costa Verde", minute_before_cv_d, cv_d, cv)
-    #     minute_before_cv_d = cv_d
-    #     print("sending update: " + message)
-    #     send_so_sms(message)
-    #     send_zack_sms(message)
-    #     # send_sam_sms(message, lux)
-    #     send_peter_sms(message)
-    #     send_adrian_sms(message)
-    #     send_dang_sms(message)
+        # iterates through the key of new_listing_dicts, which are the building names
+        for key in new_listings_dicts.keys():
+            # if there is difference in the length of the dictionary
+            if len(old_listings_dicts[key]) != len(new_listings_dicts[key]):
+                # passes the name, the old dict, new dict, and the url of the building, and constructs a message
+                message = get_difference(key, old_listings_dicts[key], new_listings_dicts[key], name_link_d[key])
+                # sets the old dict to new dict, since new dict is now the old dict
+                old_listings_dicts[key] = new_listings_dicts[key]
+                print("sending update: " + message)
+                # if lenth of inputs["numbers"] is 0, that indicates that the user customzied who gets notifications for specific buildings
+                if len(inputs["numbers"]) == 0:
+                    # sending messages to the numbers signed up for this specific building
+                    for number in inputs["{}_numbers".format(key)]:
+                        send_message(message, inputs["account_sid"], inputs["auth_token"], inputs["service_sid"], number)
+                # in the case that the user did not customize, we just send out notifications to every number in inputs["numbers"]
+                else:
+                    for number in inputs["numbers"]:
+                        send_message(message, inputs["account_sid"], inputs["auth_token"], inputs["service_sid"], number)
 
-    now = datetime.now()
-    dt_string = now.strftime("%m/%d/%Y %H:%M:%S")
-    
-    print("--------------------------------------")
-    print("Current status at " + dt_string+ ": ")
-    print("Lux UTC: " + ", ".join(lux_d.keys()))
-    print("360: " + ", ".join(three_60_d.keys()))
-    print("Costa Verde Villages: " + ", ".join(cv_d.keys()))
-    print("--------------------------------------")
-    time.sleep(60)
+        now = datetime.now()
+        dt_string = now.strftime("%m/%d/%Y %H:%M:%S")
+        
+        print("--------------------------------------")
+        print("Current status at " + dt_string+ ": \n")
+        for key in new_listings_dicts.keys():
+            print(key + ": " + " ".join(new_listings_dicts[key].keys()))
+        print("--------------------------------------")
+        time.sleep(60)
+    except Exception as e:
+        print(e)
 
