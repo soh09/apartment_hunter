@@ -1,0 +1,5 @@
+*.json
+*.ipynb
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+apartments_testing.ipynb
