@@ -1,5 +1,6 @@
 import json
 import sys
+from time import sleep
 from requests_html import HTMLSession
 
 inputs = {
@@ -8,28 +9,29 @@ inputs = {
     'account_sid': '',
     'auth_token': '',
     'service_sid': '',
-    'numbers': []
+    'numbers': [],
+    'frequency': 60
 }
 
 print("This program will ensure that your inputs are valid, so the alert program runs properly.\n")
 
 print("First, input the links for the apartment application portals that you want to scrape, and the name of the apartment.")
 print("Note that this program currently only works for sites with links that start with \"https://www.on-site.com\"")
-print("Once you are done inputting the links, type \"next\".\n")
+print("Once you are done inputting the links, type \"done\".\n")
 
 counter = 1
 link = ''
 
 # constructs the link list
 link = input("Link #{}: ".format(counter))
-while (link != 'next'):
+while (link != 'done'):
     link = link.replace(" ", "")
     # checking if the input link is a valid on-site website link
     if (link[:51] != "https://www.on-site.com/web/online_app/choose_unit?"):
         print("<Invalid Link> This link doesn't start with \n\"https://www.on-site.com/web/online_app/choose_unit?\"\n which means the alerts probably won't work.")
         print("If you have different links, feel free to try those out.")
     elif (link in inputs["links"]):
-        print("<Duplicate Link> You can't have duplicate links. Input another one, or type \"next\".")
+        print("<Duplicate Link> You can't have duplicate links. Input another one, or type \"done\".")
     else:
         try:
             session = HTMLSession()
@@ -73,7 +75,7 @@ inputs['service_sid'] = service_sid.replace(" ", "")
 
 
 # fetches numbers
-print("\nFinally, input all the numbers you'd like to send the text alerts to.")
+print("\nNext, input all the numbers you'd like to send the text alerts to.")
 print("Please follow this format: the number '012-345-6789' would be `country code` + '0123456789'.")
 print("For example, if this is a US number, then the number would be inputted as '10123456789'.\n")
 
@@ -113,9 +115,27 @@ else:
             counter += 1
         number = input("Phone number {}: ".format(counter))
 
+print("\nFinally, you can change the update frequncy of the prorgram.")
+print("By default, the program will visit the urls every 60 seconds and checks for updates.")
+print("I do not recommend updating more than once every minute, but you may change this interval if you'd like.")
+change_frequency = input("Type \"y\" if you would like to change the frequency. Type any other character to skip this step.\n")
+
+if (change_frequency.lower() == 'y'):
+    valid = False
+    while(valid == False):
+        interval = input("Type the new update frequency as whole numbers in seconds: ")
+        if (interval.isdigit()):
+            valid = True
+            if (int(interval) < 60):
+                print("Beware that this program hasn't been tested for update frequencies less than 60 seconds. The program may error.")
+            inputs["frequency"] = int(interval)
+        else:
+            print("<Invalid Input> Make sure that your input is formatted like \"60\", or \"121\".\n")
+
+
 print("Generating input.json file.")
 # sys.path ensures that the json files are stored in the same directory as apartments_alert.py
 with open(sys.path[0] + '/input.json', 'w') as f:
     json.dump(inputs, f)
-
+sleep(3)
 print("Exiting program.")

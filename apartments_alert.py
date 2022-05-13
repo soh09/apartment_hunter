@@ -130,8 +130,9 @@ def send_message(message, account_sid, token, service_sid, number):
 with open(sys.path[0] + '/input.json', 'r') as j:
     inputs = json.load(j)
 
-# makes a dictionary, which has tuples of names of the building and links as keys, and the result of make_dict() as the values
+# makes a dictionary, which has the names of the building as keys, and the result of make_dict() for that building as the values
 old_listings_dicts = {name: make_dict(get_html(link)) for (name, link) in zip(inputs['names'], inputs['links'])}
+# makes a dictionary, which has the name of the buiilding as the key, and the link for that building as the value
 name_link_d = {name: link for (name, link) in zip(inputs['names'], inputs['links'])}
 
 
@@ -163,12 +164,14 @@ while (True):
         now = datetime.now()
         dt_string = now.strftime("%m/%d/%Y %H:%M:%S")
         
+        # prints a status message 
         print("--------------------------------------")
         print("Current status at " + dt_string+ ": \n")
         for key in new_listings_dicts.keys():
             print(key + ": " + " ".join(new_listings_dicts[key].keys()))
         print("--------------------------------------")
-        time.sleep(60)
+        # loop runs every inputs["frequency"] seconds.
+        time.sleep(inputs["frequency"])
     except Exception as e:
         print(e)
 
