@@ -135,6 +135,9 @@ old_listings_dicts = {name: make_dict(get_html(link)) for (name, link) in zip(in
 # makes a dictionary, which has the name of the buiilding as the key, and the link for that building as the value
 name_link_d = {name: link for (name, link) in zip(inputs['names'], inputs['links'])}
 
+print("Apartment alerts program starting.")
+print("Targets: {}".format(", ".join(inputs["names"])))
+
 
 while (True):
 
